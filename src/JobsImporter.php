@@ -18,7 +18,7 @@ class JobsImporter
         }
     }
 
-    public function importJobs()
+    public function importJobsFromXml()
     {
         /* remove existing items */
         $this->db->exec('DELETE FROM job');
@@ -39,6 +39,33 @@ class JobsImporter
             );
             $count++;
         }
+        return $count;
+    }
+
+    public function importJobsFromJson()
+    {
+        /* remove existing items */
+        $this->db->exec('DELETE FROM job');
+
+        $jsonFile = json_decode(file_get_contents($this->file));
+
+        /* import each item */
+        $count = 0;
+        foreach ($jsonFile->offers as $offer) {
+            $offer->publishedDate = date('Y/m/d', strtotime($offer->publishedDate));
+
+            $sql = 'INSERT INTO job (reference, title, description, url, company_name, publication) VALUES ('
+            . '\'' . addslashes($offer->reference) . '\', '
+            . '\'' . addslashes($offer->title) . '\', '
+            . '\'' . addslashes($offer->description) . '\', '
+            . '\'' . addslashes($offer->link) . '\', '
+            . '\'' . addslashes($offer->companyname) . '\', '
+            . '\'' . addslashes($offer->publishedDate) . '\')';
+        
+            $this->db->exec($sql);
+            $count++;
+        }
+        
         return $count;
     }
 }
